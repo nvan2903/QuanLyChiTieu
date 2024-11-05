@@ -105,15 +105,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 }
               },
             ),
-            CategoryList(
-              onChanged: (String? value) {
-                if (value != null) {
-                  setState(() {
-                    category = value;
-                  });
-                }
-              },
-            ),
+            // CategoryList(
+            //   onChanged: (String? value) {
+            //     if (value != null) {
+            //       setState(() {
+            //         category = value;
+            //       });
+            //     }
+            //   },
+            // ),
             TypeTabBar(
               category: category,
               monthYear: monthYear,
