@@ -55,8 +55,7 @@ class AuthService {
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: Text("Đăng nhập thất bại"),
-              content: Text(e.toString()),
+              title: Text("Email hoặc mật khẩu không chính xác"),
             );
           });
     }
