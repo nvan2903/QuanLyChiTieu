@@ -31,7 +31,6 @@ class AuthService {
           builder: (context) {
             return AlertDialog(
               title: Text("Đăng ký thất bại"),
-              content: Text(e.toString()),
             );
           });
     }
