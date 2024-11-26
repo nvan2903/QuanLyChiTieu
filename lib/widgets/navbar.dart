@@ -33,6 +33,11 @@ class Navbar extends StatelessWidget {
           label: 'Giao dịch',
         ),
         NavigationDestination(
+          selectedIcon: Icon(Icons.chat),
+          icon: Icon(Icons.chat_outlined),
+          label: 'Chatbox',
+        ),
+        NavigationDestination(
           selectedIcon: Icon(Icons.person_2),
           icon: Icon(Icons.person_2_outlined),
           label: 'Trang cá nhân',

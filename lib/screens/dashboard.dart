@@ -2,6 +2,7 @@ import 'package:expense_tracker/screens/home/home_screen.dart';
 import 'package:expense_tracker/screens/profile/profile_screen.dart';
 import 'package:expense_tracker/screens/statistics/statistics_screen.dart';
 import 'package:expense_tracker/screens/transactions/transactions_screen.dart';
+import 'package:expense_tracker/screens/chat_screen.dart';
 import 'package:expense_tracker/widgets/navbar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,7 @@ class _DashboardState extends State<Dashboard> {
     HomeScreen(),
     StatisticsScreen(),
     TransactionsScreen(),
+    ChatScreen(),
     ProfileScreen(),
   ];
 
