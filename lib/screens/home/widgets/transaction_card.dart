@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:expense_tracker/screens/home/widgets/transaction_details.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -13,12 +14,22 @@ class TransactionCard extends StatelessWidget {
   });
 
   final NumberFormat currencyFormat =
-      NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
+  NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
   final AppIcons appIcons = AppIcons();
 
   @override
   Widget build(BuildContext context) {
-    DateTime date = DateTime.fromMicrosecondsSinceEpoch(data['timestamp']);
+    DateTime date;
+
+    // Kiểm tra và chuyển đổi từ Timestamp sang DateTime
+    if (data['date'] is Timestamp) {
+      date = (data['date'] as Timestamp).toDate();
+    } else if (data['date'] is String) {
+      date = DateTime.parse(data['date']);
+    } else {
+      throw Exception("Invalid date format");
+    }
+
     String formattedDate = DateFormat('d MMM hh:mma').format(date);
     final String formattedAmount = currencyFormat.format(data['amount']);
 
@@ -117,3 +128,5 @@ class TransactionCard extends StatelessWidget {
     );
   }
 }
+
+

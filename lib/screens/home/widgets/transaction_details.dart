@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -10,12 +11,22 @@ class TransactionDetailsScreen extends StatelessWidget {
   TransactionDetailsScreen({super.key, required this.data});
 
   final NumberFormat currencyFormat =
-      NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
+  NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
   final AppIcons appIcons = AppIcons();
 
   @override
   Widget build(BuildContext context) {
-    DateTime date = DateTime.fromMicrosecondsSinceEpoch(data['timestamp']);
+    DateTime date;
+
+    // Kiểm tra và chuyển đổi từ Timestamp sang DateTime
+    if (data['date'] is Timestamp) {
+      date = (data['date'] as Timestamp).toDate();
+    } else if (data['date'] is String) {
+      date = DateTime.parse(data['date']);
+    } else {
+      throw Exception("Invalid date format");
+    }
+
     String formattedDate = DateFormat('d MMM yyyy hh:mma').format(date);
     final String formattedAmount = currencyFormat.format(data['amount']);
 
@@ -61,7 +72,7 @@ class TransactionDetailsScreen extends StatelessWidget {
                     FaIcon(
                       appIcons.getExpenseCategoryIcons('${data['category']}'),
                       color:
-                          data['type'] == 'credit' ? Colors.green : Colors.red,
+                      data['type'] == 'credit' ? Colors.green : Colors.red,
                       size: 30,
                     ),
                   ],
@@ -140,7 +151,7 @@ class TransactionDetailsScreen extends StatelessWidget {
                             child: IconButton(
                               icon: Icon(Icons.edit, color: Colors.white),
                               onPressed: () {
-
+                                // Hàm xử lý sửa
                               },
                             ),
                           ),
@@ -159,7 +170,7 @@ class TransactionDetailsScreen extends StatelessWidget {
                             child: IconButton(
                               icon: Icon(Icons.delete, color: Colors.white),
                               onPressed: () {
-
+                                // Hàm xử lý xóa
                               },
                             ),
                           ),
@@ -181,3 +192,4 @@ class TransactionDetailsScreen extends StatelessWidget {
     );
   }
 }
+
