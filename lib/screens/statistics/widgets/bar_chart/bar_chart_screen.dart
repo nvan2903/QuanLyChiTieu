@@ -60,7 +60,7 @@ class _BarChartScreenState extends State<BarChartScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: Text(
-          'Biểu đồ tài chính',
+          'Biểu đồ dòng tiền',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),

@@ -16,51 +16,41 @@ class _ChatScreenState extends State<ChatScreen> {
   StreamSubscription? _streamSubscription;
   final ImagePicker _picker = ImagePicker();
 
+  /// Gửi tin nhắn và xử lý phản hồi từ Gemini
   void _sendMessage({File? image}) async {
     final message = _controller.text.trim();
 
     if (message.isNotEmpty || image != null) {
       setState(() {
         _messages.add({
-          "text": message.isNotEmpty ? "Bạn: $message" : null,
+          "text": message.isNotEmpty ? message : null,
           "image": image,
           "isUser": true,
         });
         _isTyping = true;
       });
 
-      // Nếu có hình ảnh, sử dụng `textAndImage`, nếu không chỉ sử dụng văn bản
+      // Nếu có hình ảnh, xử lý gửi văn bản và ảnh
       if (image != null) {
-        Gemini.instance.textAndImage(
-            text: message, // văn bản nhập từ người dùng
-            images: [await image.readAsBytes()] // hình ảnh gửi kèm
-        ).then((response) {
-          setState(() {
-            _messages.add({
-              "text": "Gemini: ${response?.content?.parts?.last.text ?? 'Không có phản hồi'}",
-              "isUser": false,
-            });
-            _isTyping = false;
-          });
-        }).catchError((error) {
-          setState(() {
-            _messages.add({"text": "Lỗi: Something went wrong.", "isUser": false});
-            _isTyping = false;
-          });
-        });
+        final response = await Gemini.instance.textAndImage(
+          text: message,
+          images: [await image.readAsBytes()],
+        );
+        final combinedText = response?.content?.parts?.map((e) => e.text).join(" ") ?? 'Không có phản hồi';
+
+        _addResponse(combinedText);
       } else {
+        // Nếu chỉ có văn bản, gửi yêu cầu văn bản
+        String combinedResponse = "";
         _streamSubscription = Gemini.instance.streamGenerateContent(message).listen(
               (response) {
-            setState(() {
-              _messages.add({"text": "Gemini: ${response.output}", "isUser": false});
-              _isTyping = false;
-            });
+            combinedResponse += response.output ?? "";
           },
-          onError: (e) {
-            setState(() {
-              _messages.add({"text": "Lỗi: Something went wrong.", "isUser": false});
-              _isTyping = false;
-            });
+          onDone: () {
+            _addResponse(combinedResponse);
+          },
+          onError: (error) {
+            _addResponse("Xin lỗi, có lỗi xảy ra khi xử lý yêu cầu của bạn.");
           },
         );
       }
@@ -69,6 +59,15 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  /// Thêm phản hồi của Gemini vào tin nhắn
+  void _addResponse(String text) {
+    setState(() {
+      _messages.add({"text": text, "isUser": false});
+      _isTyping = false;
+    });
+  }
+
+  /// Chọn ảnh từ thư viện và gửi đi
   Future<void> _sendImage() async {
     final XFile? imageFile = await _picker.pickImage(source: ImageSource.gallery);
     if (imageFile != null) {
@@ -91,6 +90,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Column(
         children: [
+          // Danh sách tin nhắn
           Expanded(
             child: ListView.builder(
               itemCount: _messages.length,
@@ -104,42 +104,39 @@ class _ChatScreenState extends State<ChatScreen> {
                       constraints: BoxConstraints(
                         maxWidth: MediaQuery.of(context).size.width * 0.75,
                       ),
-                      child: Card(
+                      decoration: BoxDecoration(
                         color: message["isUser"] ? Colors.blue.shade100 : Colors.grey.shade200,
-                        child: Padding(
-                          padding: const EdgeInsets.all(10.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (message["text"] != null)
-                                Text(
-                                  message["text"] ?? "",
-                                  style: TextStyle(fontSize: 16),
-                                  softWrap: true,
-                                ),
-                              if (message["image"] != null)
-                                GestureDetector(
-                                  onTap: () {
-                                    // Xử lý phóng to hình ảnh khi nhấn vào
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return Dialog(
-                                          child: Image.file(message["image"]),
-                                        );
-                                      },
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.all(10.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (message["text"] != null)
+                            Text(
+                              message["text"],
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          if (message["image"] != null)
+                            GestureDetector(
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return Dialog(
+                                      child: Image.file(message["image"]),
                                     );
                                   },
-                                  child: Image.file(
-                                    message["image"],
-                                    width: 150,
-                                    height: 150,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
+                                );
+                              },
+                              child: Image.file(
+                                message["image"],
+                                width: 150,
+                                height: 150,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
@@ -148,15 +145,21 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
 
+          // Hiển thị "đang nhập..."
           if (_isTyping)
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
                 'Gemini đang nhập...',
-                style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey,
+                ),
               ),
             ),
 
+          // Thanh nhập tin nhắn và nút gửi
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
@@ -170,9 +173,11 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: TextField(
                     controller: _controller,
                     decoration: InputDecoration(
-                      hintText: 'Hãy nhập gì đó...',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+                      hintText: 'Nhập tin nhắn...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20.0),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
                     ),
                   ),
                 ),
